@@ -6,9 +6,9 @@
     layer: { fontPath: './assets/Patua_One/PatuaOne-Regular.ttf' },
   },
   clips: [
-    { duration: 10, layers: [
+    { duration: 20, layers: [
       { type: 'image', path: './assets/91083241_573589476840991_4224678072281051330_n.jpg' },
-      { type: 'news-title', text: 'BREAKING NEWS', delay: 0, manualTiming: true, startTime: 1, finishTime: 5, fadeDuration: 2 },
+      { type: 'news-title', text: 'BREAKING NEWS', delay: 0, speed: 0.5, manualTiming: true, startTime: 4, finishTime: 15, fadeDuration: 2 },
       // { type: 'news-title', text: 'BREAKING NEWS', delay: 0.5, manualTiming: false, fadeInDelay: 2, fadeInDuration: 1, holdDuration: 2 },
       // { type: 'news-title', text: 'BREAKING NEWS', manualTiming: true },
       // { type: 'subtitle', text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.', backgroundColor: 'rgba(0,0,0,0.5)' }

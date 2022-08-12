@@ -288,77 +288,36 @@ async function titleFrameSource({ width, height, params }) {
 async function newsTitleFrameSource({ width, height, duration, params }) {
   const { text, textColor = '#ffffff', backgroundColor = '#d02a42', fontFamily = defaultFontFamily, delay = 0, speed = 1, manualTiming = false, startTime = 0, finishTime = 2, fadeDuration = 1 } = params;
 
-  console.log(`(${width}w x ${height}h) News Title being generated with params`, params);
-  // console.log('duration:', duration);
-
-  if (manualTiming) {
-    // assert(startTime && fadeDuration && finishTime, 'manualTiming mode is enabled, please specify startTime, fadeDuration, and finishTime');
-    if (delay || speed) console.warn('manual timing is enabled, so delay and speed parameters have no effect');
-
-    // console.log('startTime + fadeDuration + finishTime:', startTime + fadeDuration + finishTime);
-
-    // if ((startTime + fadeDuration + finishTime) > duration) console.warn('animation length is longer than the clip duration, please reduce startTime, fadeDuration, and/or finishTime');
-    // if (finishTime > duration) console.warn('animation length is longer than the clip duration, please reduce startTime, fadeDuration, and/or finishTime');
-  } else {
+  if (manualTiming && (delay || speed)) {
+    console.warn('manual timing is enabled, so delay and speed parameters have no effect');
+  } else if (!manualTiming && (startTime, finishTime, fadeDuration)) {
     console.warn('manual timing is disabled, so startTime, fadeDuration, and finishTime have no effect');
-    // assert(!(startTime || fadeDuration || finishTime), 'manualTiming must be enabled in order to use startTime, fadeDuration, and finishTime');
   }
 
   const totalEffectDuration = finishTime - startTime;
-  const bgFadeInStartProgress = startTime / duration;
+  const bgFadeInStartProgress = manualTiming ? startTime / duration : delay;
   const bgFadeOutFinishProgress = finishTime / duration;
-  const bgSpeed = duration / fadeDuration;
-  const textSpeed = (4 / 3) * bgSpeed;
-
-  console.log('totalEffectDuration:', totalEffectDuration);
-  console.log('bgFadeInStartProgress:', bgFadeInStartProgress);
-  console.log('bgFadeOutFinishProgress:', bgFadeOutFinishProgress);
-  console.log('bgSpeed:', bgSpeed);
-  console.log('textSpeed:', textSpeed);
-
-  console.log('expo test:', easeOutExpo(-20));
+  const bgSpeed = manualTiming ? duration / fadeDuration : speed * 3;
+  const textSpeed = manualTiming ? bgSpeed * (4 / 3) : speed * 4;
 
   async function onRender(progress, canvas) {
-    // console.log(`progress (${speed}):`, progress);
     const min = Math.min(width, height);
-
     const fontSize = Math.round(min * 0.05);
 
-    // const secondsGuess = progress * duration;
+    const bgFadeOutLevel = (bgFadeOutFinishProgress - progress) * bgSpeed;
+    const textOutLevel = (bgFadeOutFinishProgress - progress - (0.02 * (totalEffectDuration / duration))) * bgSpeed;
 
-    // console.log(`(${progress} / ${duration}) secondsGuess:`, secondsGuess); // Maybe round
+    const easedBgProgress = manualTiming
+      ? clampedEaseOutExpo(bgFadeOutLevel > 1 ? (progress - bgFadeInStartProgress) * bgSpeed : bgFadeOutLevel)
+      : clampedEaseOutExpo((progress - bgFadeInStartProgress) * bgSpeed);
 
-    let easedBgProgress;
-    let easedTextProgress;
-    let easedTextOpacityProgress;
-    // May not need to have two easedABC sections, since I might be able to convert the original defaults to something declarative
-    if (manualTiming) {
-      // easedBgProgress = easeOutExpo(progress < bgFadeOutFinishProgress ? Math.max(0, Math.min((progress - bgFadeInStartProgress) * bgSpeed, 1)) : Math.max(Math.min((bgFadeOutFinishProgress - progress) * bgSpeed, 1), 0));
-      // easedBgProgress = easeOutExpo(progress < bgFadeOutFinishProgress ? Math.max(0, Math.min((progress - bgFadeInStartProgress) * bgSpeed, 1)) : Math.max(0, Math.max((bgFadeOutFinishProgress - progress) * bgSpeed, 0)));
-      // console.log('(bgFadeOutFinishProgress - progress) * bgSpeed:', (bgFadeOutFinishProgress - progress) * bgSpeed);
-      // const fadeOutProgress = (bgFadeOutFinishProgress - progress) * bgSpeed;
-      // const fadeOutLevel = ((bgFadeOutFinishProgress - progress) * bgSpeed);
-      // console.log(`(${bgFadeOutFinishProgress}, ${progress}) fadeOutLevel:`, fadeOutLevel);
+    const easedTextProgress = manualTiming
+      ? clampedEaseOutExpo(textOutLevel > 1 ? (progress - bgFadeInStartProgress - (0.02 * (totalEffectDuration / duration))) * textSpeed : textOutLevel)
+      : clampedEaseOutExpo((progress - bgFadeInStartProgress - 0.02) * textSpeed);
 
-      const bgFadeOutLevel = (bgFadeOutFinishProgress - progress) * bgSpeed;
-      const textOutLevel = (bgFadeOutFinishProgress - progress - (0.02 * (totalEffectDuration / duration))) * bgSpeed;
-      console.log(`(${bgFadeOutFinishProgress}, ${progress}) textOutLevel:`, textOutLevel);
-
-      // easedBgProgress = easeOutExpo(progress < bgFadeOutFinishProgress ? 1 : Math.max(0, Math.max((bgFadeOutFinishProgress - progress) * bgSpeed, 0)));
-      // easedBgProgress = easeOutExpo(Math.max(0, Math.min(bgFadeOutLevel, 1)));
-      // easedBgProgress = easeOutExpo(progress < bgFadeOutFinishProgress ? 1 : Math.max(0, Math.min(bgFadeOutLevel, 1)));
-      // easedBgProgress = easeOutExpo(progress > bgFadeOutFinishProgress ? Math.max(0, Math.min((progress - bgFadeInStartProgress) * bgSpeed, 1)) : Math.max(0, Math.min(bgFadeOutLevel, 1)));
-      easedBgProgress = clampedEaseOutExpo(bgFadeOutLevel > 1 ? (progress - bgFadeInStartProgress) * bgSpeed : bgFadeOutLevel);
-      // easedBgProgress = clampedEaseOutExpo(progress < ((startTime + fadeDuration) / duration) ? (progress - bgFadeInStartProgress) * bgSpeed : (bgFadeOutFinishProgress - progress) * bgSpeed);
-      // easedTextProgress = easeOutExpo(Math.max(0, Math.min((progress - bgFadeInStartProgress - (0.02 * (totalEffectDuration / duration))) * textSpeed, 1)));
-      easedTextProgress = clampedEaseOutExpo(textOutLevel > 1 ? (progress - bgFadeInStartProgress - (0.02 * (totalEffectDuration / duration))) * textSpeed : textOutLevel);
-      // easedTextProgress = clampedEaseOutExpo(Math.max(0, Math.min((progress - bgFadeInStartProgress - (0.02 * (totalEffectDuration / duration))) * textSpeed, 1)));
-      easedTextOpacityProgress = easeOutExpo(Math.max(0, Math.min((progress - bgFadeInStartProgress - (0.07 * (totalEffectDuration / duration))) * textSpeed, 1)));
-    } else {
-      easedBgProgress = easeOutExpo(Math.max(0, Math.min((progress - delay) * speed * 3, 1)));
-      easedTextProgress = easeOutExpo(Math.max(0, Math.min((progress - delay - 0.02) * speed * 4, 1)));
-      easedTextOpacityProgress = easeOutExpo(Math.max(0, Math.min((progress - delay - 0.07) * speed * 4, 1)));
-    }
+    const easedTextOpacityProgress = manualTiming
+      ? clampedEaseOutExpo(progress - bgFadeInStartProgress - (0.07 * (totalEffectDuration / duration))) * textSpeed // Text does not fade out
+      : clampedEaseOutExpo((progress - bgFadeInStartProgress - 0.07) * textSpeed);
 
     const top = height * 0.08;
 
