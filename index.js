@@ -21,6 +21,7 @@ const Editly = async (config = {}) => {
   const {
     // Testing options:
     enableFfmpegLog = false,
+    aMixNormalization = false,
     verbose = false,
     logTimes = false,
     keepTmp = false,
@@ -68,7 +69,7 @@ const Editly = async (config = {}) => {
   if (verbose) console.log({ tmpDir });
   await fs.mkdirp(tmpDir);
 
-  const { editAudio } = Audio({ ffmpegPath, ffprobePath, enableFfmpegLog, verbose, tmpDir });
+  const { editAudio } = Audio({ ffmpegPath, ffprobePath, enableFfmpegLog, verbose, tmpDir, aMixNormalization });
 
   const audioFilePath = !isGif ? await editAudio({ keepSourceAudio, arbitraryAudio, clipsAudioVolume, clips, audioNorm, outputVolume }) : undefined;
 

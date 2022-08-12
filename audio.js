@@ -6,7 +6,9 @@ const flatMap = require('lodash/flatMap');
 const { getFfmpegCommonArgs, getCutFromArgs } = require('./ffmpeg');
 const { readFileStreams } = require('./util');
 
-module.exports = ({ ffmpegPath, ffprobePath, enableFfmpegLog, verbose, tmpDir }) => {
+module.exports = ({ ffmpegPath, ffprobePath, enableFfmpegLog, aMixNormalization, verbose, tmpDir }) => {
+  console.log('aMixNormalization:', aMixNormalization);
+
   async function createMixedAudioClips({ clips, keepSourceAudio }) {
     return pMap(clips, async (clip, i) => {
       const { duration, layers, transition } = clip;
@@ -100,7 +102,7 @@ module.exports = ({ ffmpegPath, ffprobePath, enableFfmpegLog, verbose, tmpDir })
         const args = [
           ...getFfmpegCommonArgs({ enableFfmpegLog }),
           ...flatMap(processedAudioLayers, ({ layerAudioPath }) => ['-i', layerAudioPath]),
-          '-filter_complex', `amix=inputs=${processedAudioLayers.length}:normalize=0:duration=longest:weights=${weights.join(' ')}`,
+          '-filter_complex', `amix=inputs=${processedAudioLayers.length}${aMixNormalization ? ':normalize=0' : ''}:duration=longest:weights=${weights.join(' ')}`,
           '-c:a', 'flac',
           '-y',
           clipAudioPath,
@@ -175,7 +177,7 @@ module.exports = ({ ffmpegPath, ffprobePath, enableFfmpegLog, verbose, tmpDir })
 
     const volumeArg = outputVolume != null ? `,volume=${outputVolume}` : '';
     const audioNormArg = enableAudioNorm ? `,dynaudnorm=g=${gaussSize}:maxgain=${maxGain}` : '';
-    filterComplex += `;${streams.map((s, i) => `[a${i}]`).join('')}amix=inputs=${streams.length}:normalize=0:duration=first:dropout_transition=0:weights=${streams.map((s) => (s.mixVolume != null ? s.mixVolume : 1)).join(' ')}${audioNormArg}${volumeArg}`;
+    filterComplex += `;${streams.map((s, i) => `[a${i}]`).join('')}amix=inputs=${streams.length}${aMixNormalization ? ':normalize=0' : ''}:duration=first:dropout_transition=0:weights=${streams.map((s) => (s.mixVolume != null ? s.mixVolume : 1)).join(' ')}${audioNormArg}${volumeArg}`;
 
     const mixedAudioPath = join(tmpDir, 'audio-mixed.flac');
 
