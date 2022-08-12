@@ -80,8 +80,8 @@ async function rgbaToFabricImage({ width, height, rgba }) {
   return new fabric.Image(canvas);
 }
 
-async function createFabricFrameSource(func, { width, height, ...rest }) {
-  const onInit = async () => func(({ width, height, fabric, ...rest }));
+async function createFabricFrameSource(func, { width, height, duration, ...rest }) {
+  const onInit = async () => func(({ width, height, duration, fabric, ...rest }));
 
   const { onRender = () => {}, onClose = () => {} } = await onInit() || {};
 
