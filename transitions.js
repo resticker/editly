@@ -8,8 +8,13 @@ function getRandomTransition() {
 
 // https://easings.net/
 
+
 function easeOutExpo(x) {
   return x === 1 ? 1 : 1 - (2 ** (-10 * x));
+}
+
+function clampedEaseOutExpo(x) {
+  return easeOutExpo(Math.min(Math.max(x, 0), 1));
 }
 
 function easeInOutCubic(x) {
@@ -65,4 +70,5 @@ module.exports = {
   calcTransition,
   easeInOutCubic,
   easeOutExpo,
+  clampedEaseOutExpo,
 };

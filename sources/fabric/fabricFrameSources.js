@@ -2,7 +2,7 @@ const { fabric } = require('fabric');
 const fileUrl = require('file-url');
 
 const { getRandomGradient, getRandomColors } = require('../../colors');
-const { easeOutExpo, easeInOutCubic } = require('../../transitions');
+const { easeOutExpo, easeInOutCubic, clampedEaseOutExpo } = require('../../transitions');
 const { getPositionProps, getFrameByKeyFrames, isUrl } = require('../../util');
 const { blurImage } = require('../fabric');
 
@@ -316,6 +316,8 @@ async function newsTitleFrameSource({ width, height, duration, params }) {
   console.log('bgSpeed:', bgSpeed);
   console.log('textSpeed:', textSpeed);
 
+  console.log('expo test:', easeOutExpo(-20));
+
   async function onRender(progress, canvas) {
     // console.log(`progress (${speed}):`, progress);
     const min = Math.min(width, height);
@@ -335,15 +337,22 @@ async function newsTitleFrameSource({ width, height, duration, params }) {
       // easedBgProgress = easeOutExpo(progress < bgFadeOutFinishProgress ? Math.max(0, Math.min((progress - bgFadeInStartProgress) * bgSpeed, 1)) : Math.max(0, Math.max((bgFadeOutFinishProgress - progress) * bgSpeed, 0)));
       // console.log('(bgFadeOutFinishProgress - progress) * bgSpeed:', (bgFadeOutFinishProgress - progress) * bgSpeed);
       // const fadeOutProgress = (bgFadeOutFinishProgress - progress) * bgSpeed;
-      const fadeOutLevel = ((bgFadeOutFinishProgress - progress) * bgSpeed);
-      console.log(`(${bgFadeOutFinishProgress}, ${progress}) fadeOutLevel:`, fadeOutLevel);
+      // const fadeOutLevel = ((bgFadeOutFinishProgress - progress) * bgSpeed);
+      // console.log(`(${bgFadeOutFinishProgress}, ${progress}) fadeOutLevel:`, fadeOutLevel);
+
+      const bgFadeOutLevel = (bgFadeOutFinishProgress - progress) * bgSpeed;
+      const textOutLevel = (bgFadeOutFinishProgress - progress - (0.02 * (totalEffectDuration / duration))) * bgSpeed;
+      console.log(`(${bgFadeOutFinishProgress}, ${progress}) textOutLevel:`, textOutLevel);
 
       // easedBgProgress = easeOutExpo(progress < bgFadeOutFinishProgress ? 1 : Math.max(0, Math.max((bgFadeOutFinishProgress - progress) * bgSpeed, 0)));
-      // easedBgProgress = easeOutExpo(Math.max(0, Math.min(fadeOutLevel, 1)));
-      // easedBgProgress = easeOutExpo(progress < bgFadeOutFinishProgress ? 1 : Math.max(0, Math.min(fadeOutLevel, 1)));
-      // easedBgProgress = easeOutExpo(progress > bgFadeOutFinishProgress ? Math.max(0, Math.min((progress - bgFadeInStartProgress) * bgSpeed, 1)) : Math.max(0, Math.min(fadeOutLevel, 1)));
-      easedBgProgress = easeOutExpo(fadeOutLevel > 1 ? Math.max(0, Math.min((progress - bgFadeInStartProgress) * bgSpeed, 1)) : Math.max(0, Math.min(fadeOutLevel, 1)));
-      easedTextProgress = easeOutExpo(Math.max(0, Math.min((progress - bgFadeInStartProgress - (0.02 * (totalEffectDuration / duration))) * textSpeed, 1)));
+      // easedBgProgress = easeOutExpo(Math.max(0, Math.min(bgFadeOutLevel, 1)));
+      // easedBgProgress = easeOutExpo(progress < bgFadeOutFinishProgress ? 1 : Math.max(0, Math.min(bgFadeOutLevel, 1)));
+      // easedBgProgress = easeOutExpo(progress > bgFadeOutFinishProgress ? Math.max(0, Math.min((progress - bgFadeInStartProgress) * bgSpeed, 1)) : Math.max(0, Math.min(bgFadeOutLevel, 1)));
+      easedBgProgress = clampedEaseOutExpo(bgFadeOutLevel > 1 ? (progress - bgFadeInStartProgress) * bgSpeed : bgFadeOutLevel);
+      // easedBgProgress = clampedEaseOutExpo(progress < ((startTime + fadeDuration) / duration) ? (progress - bgFadeInStartProgress) * bgSpeed : (bgFadeOutFinishProgress - progress) * bgSpeed);
+      // easedTextProgress = easeOutExpo(Math.max(0, Math.min((progress - bgFadeInStartProgress - (0.02 * (totalEffectDuration / duration))) * textSpeed, 1)));
+      easedTextProgress = clampedEaseOutExpo(textOutLevel > 1 ? (progress - bgFadeInStartProgress - (0.02 * (totalEffectDuration / duration))) * textSpeed : textOutLevel);
+      // easedTextProgress = clampedEaseOutExpo(Math.max(0, Math.min((progress - bgFadeInStartProgress - (0.02 * (totalEffectDuration / duration))) * textSpeed, 1)));
       easedTextOpacityProgress = easeOutExpo(Math.max(0, Math.min((progress - bgFadeInStartProgress - (0.07 * (totalEffectDuration / duration))) * textSpeed, 1)));
     } else {
       easedBgProgress = easeOutExpo(Math.max(0, Math.min((progress - delay) * speed * 3, 1)));
