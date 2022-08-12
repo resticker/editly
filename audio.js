@@ -7,8 +7,6 @@ const { getFfmpegCommonArgs, getCutFromArgs } = require('./ffmpeg');
 const { readFileStreams } = require('./util');
 
 module.exports = ({ ffmpegPath, ffprobePath, enableFfmpegLog, aMixNormalization, verbose, tmpDir }) => {
-  console.log('aMixNormalization:', aMixNormalization);
-
   async function createMixedAudioClips({ clips, keepSourceAudio }) {
     return pMap(clips, async (clip, i) => {
       const { duration, layers, transition } = clip;

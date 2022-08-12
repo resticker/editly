@@ -1103,6 +1103,12 @@ declare namespace Editly {
 		audioNorm?: AudioNormalizationOptions;
 
 		/**
+		 * Always scale inputs instead of only doing summation of samples. Beware of heavy clipping if inputs are not normalized prior or after filtering by this filter if this option is disabled. By default is enabled.
+		 * This is not the same as audioNorm, which automically lowers the volume of background audio.
+		 */
+		 aMixNormalization?: boolean;
+
+		/**
 		 * WARNING: Undocumented feature!
 		 */
 		ffmpegPath?: string;
