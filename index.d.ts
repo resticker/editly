@@ -627,17 +627,17 @@ declare namespace Editly {
 		
 		
 		 /**
-		 * (For manualTiming) When the fade in should start
+		 * (When manualTiming=true) When the fade in should start
 		 */
 			startTime: number;
 
 		 /**
-		 * (For manualTiming) When the fade out should complete
+		 * (When manualTiming=true) When the fade out should complete
 		 */
 			finishTime: number;
 
 		 /**
-		 * (For manualTiming) Fade in/out duration
+		 * (When manualTiming=true) Fade in/out duration
 		 */
 			fadeDuration: number
 

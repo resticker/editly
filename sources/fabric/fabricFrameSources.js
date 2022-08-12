@@ -286,7 +286,7 @@ async function titleFrameSource({ width, height, params }) {
 }
 
 async function newsTitleFrameSource({ width, height, duration, params }) {
-  const { text, textColor = '#ffffff', backgroundColor = '#d02a42', fontFamily = defaultFontFamily, delay = 0, speed = 1, manualTiming = false, startTime = 0, finishTime = 2, fadeDuration = 1 } = params;
+  const { text, textColor = '#ffffff', backgroundColor = '#d02a42', fontFamily = defaultFontFamily, delay = 0, speed = 1, manualTiming = false, startTime = 0, finishTime = startTime + 3, fadeDuration = 1 } = params;
 
   if (manualTiming && (delay || speed)) {
     console.warn('manual timing is enabled, so delay and speed parameters have no effect');
