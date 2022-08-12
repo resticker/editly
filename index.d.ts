@@ -620,6 +620,27 @@ declare namespace Editly {
 		 */
 		position?: Position;
 
+		/**
+		 * Use manual animation timing. This disables automatic timing if true
+		 */
+		 manualTiming?: boolean;
+		
+		
+		 /**
+		 * (For manualTiming) When the fade in should start
+		 */
+			startTime: number;
+
+		 /**
+		 * (For manualTiming) When the fade out should complete
+		 */
+			finishTime: number;
+
+		 /**
+		 * (For manualTiming) Fade in/out duration
+		 */
+			fadeDuration: number
+
 	}
 
 	interface SlideInTextLayer extends BaseLayer {
