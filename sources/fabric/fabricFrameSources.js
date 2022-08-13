@@ -280,41 +280,6 @@ async function imageOverlayFrameSource({ params, width, height }) {
   return { onRender };
 }
 
-
-// async function imageOverlayFrameSource({ params, width, height }) {
-//   const { path, position, width: relWidth, height: relHeight, zoomDirection, zoomAmount = 0.1 } = params;
-
-//   const imgData = await loadImage(path);
-
-//   const { left, top, originX, originY } = getPositionProps({ position, width, height });
-
-//   const img = new fabric.Image(imgData, {
-//     originX,
-//     originY,
-//     left,
-//     top,
-//   });
-
-
-//   async function onRender(progress, canvas) {
-//     const scaleFactor = getZoomParams({ progress, zoomDirection, zoomAmount });
-
-
-//     if (relWidth != null) {
-//       img.scaleToWidth(relWidth * width * scaleFactor);
-//     } else if (relHeight != null) {
-//       img.scaleToHeight(relHeight * height * scaleFactor);
-//     } else {
-//       // Default to screen width
-//       img.scaleToWidth(width * scaleFactor);
-//     }
-
-//     canvas.add(img);
-//   }
-
-//   return { onRender };
-// }
-
 async function titleFrameSource({ width, height, params }) {
   const { text, textColor = '#ffffff', fontFamily = defaultFontFamily, position = 'center', zoomDirection = 'in', zoomAmount = 0.2 } = params;
 
