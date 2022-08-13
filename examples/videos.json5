@@ -7,7 +7,7 @@
   },
   clips: [
     { duration: 2, layers: [{ type: 'title-background', text: 'Editly can handle all formats and sizes with different fits', background: { type: 'radial-gradient' } }] },
-    { layers: [{ type: 'video', path: './assets/palawan.mp4', cutFrom: 0, cutTo: 2, resizeMode: 'contain' }, { type: 'title', text: 'Contain' }] },
+    { layers: [{ type: 'video', path: './assets/testvideo.mp4', cutFrom: 0, cutTo: 2, resizeMode: 'contain' }, { type: 'title', text: 'Contain' }] },
     { layers: [{ type: 'video', path: './assets/palawan.mp4', cutFrom: 0, cutTo: 2, resizeMode: 'contain-blur' }, { type: 'title', text: 'Contain (blur)' }] },
     { layers: [{ type: 'video', path: './assets/IMG_1884.MOV', cutFrom: 0, cutTo: 2, resizeMode: 'contain-blur' }, { type: 'title', text: 'Contain\n(blur, vertical)' }] },
     { layers: [{ type: 'video', path: './assets/palawan.mp4', cutFrom: 0, cutTo: 2, resizeMode: 'stretch' }, { type: 'title', text: 'Stretch' }] },

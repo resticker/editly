@@ -215,11 +215,30 @@ async function subtitleFrameSource({ width, height, params }) {
 }
 
 async function imageOverlayFrameSource({ params, width, height }) {
-  const { path, position, width: relWidth, height: relHeight, zoomDirection, zoomAmount = 0.1 } = params;
+  const {
+    path,
+    position,
+    width: relWidth,
+    height: relHeight,
+    zoomDirection,
+    zoomAmount = 0.1,
+  } = params;
 
   const imgData = await loadImage(path);
 
-  const { left, top, originX, originY } = getPositionProps({ position, width, height });
+  const { left, top, originX, originY } = getPositionProps({
+    position,
+    width,
+    height,
+  });
+
+  // console.log("in imageOverlayFrameSource");
+  // console.log("params:", params);
+  // console.log(
+  //   "getPositionProps({ position, width, height }):",
+  //   getPositionProps({ position, width, height })
+  // );
+  // console.log("imgData:", imgData);
 
   const img = new fabric.Image(imgData, {
     originX,
@@ -228,23 +247,141 @@ async function imageOverlayFrameSource({ params, width, height }) {
     top,
   });
 
+  let scaleMode = 0; // 0 = none, 1 = width, 2 = height
+  if (relHeight && relWidth) {
+    /*
+    const ratioW = width / img.width;
+    const ratioH = height / img.height;
+
+
+    if (ratioW > ratioH) {
+      scaleMode = 1
+    } else {
+      scaleMode = 2
+    }
+
+*/
+
+    const screenRatio = width / height;
+    const imageRatio = img.width / img.height;
+    // console.log("screenRatio:", screenRatio);
+    // console.log("imageRatio:", imageRatio);
+
+    // console.log("both scalings set");
+    // Image is taller, so 188 / 1256 = .15
+    // const fitImageToScreenScaleFactor =
+    //   imageRatio < screenRatio ? height / img.height : width / img.width;
+
+    // console.log("fitImageToScreenScaleFactor:", fitImageToScreenScaleFactor);
+
+    const relHIfRelWUsed = (screenRatio / imageRatio) * relWidth;
+    const relWIfRelHUsed = (imageRatio / screenRatio) * relHeight;
+
+    // console.log("relHIfRelWUsed:", relHIfRelWUsed);
+    // console.log("relWIfRelHUsed:", relWIfRelHUsed);
+
+    // Compare the generated dimension (relXIfRelYUsed) with the user defined limit (if negative, the generated dimension exceeds the user limit)
+    const heightDiff = relHeight - relHIfRelWUsed; // 0.9 - 0.25 = 0.65
+    const widthDiff = relWidth - relWIfRelHUsed; // 0.12 - 0.43 = -.31
+
+    // console.log("heightDiff:", heightDiff);
+    // console.log("widthDiff:", widthDiff);
+
+    if (heightDiff > widthDiff) {
+      // relHeight = null;
+      scaleMode = 1;
+    } else {
+      // relWidth = null;
+      scaleMode = 2;
+    }
+  } else if (relWidth) {
+    scaleMode = 1;
+  } else if (relHeight) {
+    scaleMode = 2;
+  }
+
+  console.log('scaleMode:', scaleMode);
+
+  let didouput = false;
+
   async function onRender(progress, canvas) {
     const scaleFactor = getZoomParams({ progress, zoomDirection, zoomAmount });
 
-    if (relWidth != null) {
+    const curWidth = relWidth * width * scaleFactor;
+    const curHeight = relHeight * height * scaleFactor;
+
+    if (!didouput) {
+      console.log('width:', width);
+      console.log('height:', height);
+      console.log('curWidth:', curWidth);
+      console.log('curHeight:', curHeight);
+      console.log('img.width:', img.width);
+      console.log('img.height:', img.height);
+      console.log('canvas.width:', canvas.width);
+      console.log('canvas.height:', canvas.height);
+      didouput = true;
+    }
+
+    if (scaleMode === 1) {
       img.scaleToWidth(relWidth * width * scaleFactor);
-    } else if (relHeight != null) {
+    } else if (scaleMode === 2) {
       img.scaleToHeight(relHeight * height * scaleFactor);
     } else {
       // Default to screen width
       img.scaleToWidth(width * scaleFactor);
     }
+    // if (relWidth != null) {
+    //   img.scaleToWidth(relWidth * width * scaleFactor);
+    // } else if (relHeight != null) {
+    //   img.scaleToHeight(relHeight * height * scaleFactor);
+    // } else {
+    //   // Default to screen width
+    //   img.scaleToWidth(width * scaleFactor);
+    // }
+
+    // console.log("scaled img.width:", img.width);
+    // console.log("scaled img.height:", img.height);
 
     canvas.add(img);
   }
 
   return { onRender };
 }
+
+
+// async function imageOverlayFrameSource({ params, width, height }) {
+//   const { path, position, width: relWidth, height: relHeight, zoomDirection, zoomAmount = 0.1 } = params;
+
+//   const imgData = await loadImage(path);
+
+//   const { left, top, originX, originY } = getPositionProps({ position, width, height });
+
+//   const img = new fabric.Image(imgData, {
+//     originX,
+//     originY,
+//     left,
+//     top,
+//   });
+
+
+//   async function onRender(progress, canvas) {
+//     const scaleFactor = getZoomParams({ progress, zoomDirection, zoomAmount });
+
+
+//     if (relWidth != null) {
+//       img.scaleToWidth(relWidth * width * scaleFactor);
+//     } else if (relHeight != null) {
+//       img.scaleToHeight(relHeight * height * scaleFactor);
+//     } else {
+//       // Default to screen width
+//       img.scaleToWidth(width * scaleFactor);
+//     }
+
+//     canvas.add(img);
+//   }
+
+//   return { onRender };
+// }
 
 async function titleFrameSource({ width, height, params }) {
   const { text, textColor = '#ffffff', fontFamily = defaultFontFamily, position = 'center', zoomDirection = 'in', zoomAmount = 0.2 } = params;
