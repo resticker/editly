@@ -478,11 +478,13 @@ declare namespace Editly {
 
 		/**
 		 * Width (from 0 to 1) where 1 is screen width.
+		 * If width and height are both set, the image will act like "contain" within those bounds
 		 */
 		width?: number;
 
 		/**
 		 * Height (from 0 to 1) where 1 is screen height.
+		 * If width and height are both set, the image will act like "contain" within those bounds
 		 */
 		height?: number;
 
