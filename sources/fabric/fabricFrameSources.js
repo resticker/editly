@@ -334,29 +334,32 @@ async function newsTitleFrameSource({ width, height, duration, params }) {
   const bgSpeed = manualTiming ? duration / fadeDuration : speed * 3;
   const textSpeed = manualTiming ? bgSpeed * (4 / 3) : speed * 4;
 
-  async function onRender(progress, canvas) {
-    const min = Math.min(width, height);
-    const fontSize = Math.round(min * 0.05);
+  const min = Math.min(width, height);
+  const fontSize = Math.round(min * 0.05);
 
+  const textOutOffset = 0.02 * (totalEffectDuration / duration);
+  const manualTextOpacityOffset = 0.07 * (totalEffectDuration / duration);
+
+  const top = height * 0.08;
+
+  const paddingV = 0.07 * min;
+  const paddingH = 0.03 * min;
+
+  async function onRender(progress, canvas) {
     const bgFadeOutLevel = (bgFadeOutFinishProgress - progress) * bgSpeed;
-    const textOutLevel = (bgFadeOutFinishProgress - progress - (0.02 * (totalEffectDuration / duration))) * bgSpeed;
+    const textOutLevel = (bgFadeOutFinishProgress - progress - textOutOffset) * bgSpeed;
 
     const easedBgProgress = manualTiming
       ? clampedEaseOutExpo(bgFadeOutLevel > 1 ? (progress - bgFadeInStartProgress) * bgSpeed : bgFadeOutLevel)
       : clampedEaseOutExpo((progress - bgFadeInStartProgress) * bgSpeed);
 
     const easedTextProgress = manualTiming
-      ? clampedEaseOutExpo(textOutLevel > 1 ? (progress - bgFadeInStartProgress - (0.02 * (totalEffectDuration / duration))) * textSpeed : textOutLevel)
+      ? clampedEaseOutExpo(textOutLevel > 1 ? (progress - bgFadeInStartProgress - textOutOffset) * textSpeed : textOutLevel)
       : clampedEaseOutExpo((progress - bgFadeInStartProgress - 0.02) * textSpeed);
 
     const easedTextOpacityProgress = manualTiming
-      ? clampedEaseOutExpo(progress - bgFadeInStartProgress - (0.07 * (totalEffectDuration / duration))) * textSpeed // Text does not fade out
+      ? clampedEaseOutExpo(progress - bgFadeInStartProgress - manualTextOpacityOffset) * textSpeed // Text does not fade out
       : clampedEaseOutExpo((progress - bgFadeInStartProgress - 0.07) * textSpeed);
-
-    const top = height * 0.08;
-
-    const paddingV = 0.07 * min;
-    const paddingH = 0.03 * min;
 
     const textBox = new fabric.Text(text, {
       top,
