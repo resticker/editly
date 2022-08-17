@@ -346,42 +346,47 @@ async function newsTitleFrameSource({ width, height, duration, params }) {
   const paddingH = 0.03 * min;
 
   async function onRender(progress, canvas) {
-    const bgFadeOutLevel = (bgFadeOutFinishProgress - progress) * bgSpeed;
-    const textOutLevel = (bgFadeOutFinishProgress - progress - textOutOffset) * bgSpeed;
+    if (
+      !manualTiming
+      || (progress > bgFadeInStartProgress && progress < bgFadeOutFinishProgress)
+    ) {
+      const bgFadeOutLevel = (bgFadeOutFinishProgress - progress) * bgSpeed;
+      const textOutLevel = (bgFadeOutFinishProgress - progress - textOutOffset) * bgSpeed;
 
-    const easedBgProgress = manualTiming
-      ? clampedEaseOutExpo(bgFadeOutLevel > 1 ? (progress - bgFadeInStartProgress) * bgSpeed : bgFadeOutLevel)
-      : clampedEaseOutExpo((progress - bgFadeInStartProgress) * bgSpeed);
+      const easedBgProgress = manualTiming
+        ? clampedEaseOutExpo(bgFadeOutLevel > 1 ? (progress - bgFadeInStartProgress) * bgSpeed : bgFadeOutLevel)
+        : clampedEaseOutExpo((progress - bgFadeInStartProgress) * bgSpeed);
 
-    const easedTextProgress = manualTiming
-      ? clampedEaseOutExpo(textOutLevel > 1 ? (progress - bgFadeInStartProgress - textOutOffset) * textSpeed : textOutLevel)
-      : clampedEaseOutExpo((progress - bgFadeInStartProgress - 0.02) * textSpeed);
+      const easedTextProgress = manualTiming
+        ? clampedEaseOutExpo(textOutLevel > 1 ? (progress - bgFadeInStartProgress - textOutOffset) * textSpeed : textOutLevel)
+        : clampedEaseOutExpo((progress - bgFadeInStartProgress - 0.02) * textSpeed);
 
-    const easedTextOpacityProgress = manualTiming
-      ? clampedEaseOutExpo(progress - bgFadeInStartProgress - manualTextOpacityOffset) * textSpeed // Text does not fade out
-      : clampedEaseOutExpo((progress - bgFadeInStartProgress - 0.07) * textSpeed);
+      const easedTextOpacityProgress = manualTiming
+        ? clampedEaseOutExpo(progress - bgFadeInStartProgress - manualTextOpacityOffset) * textSpeed // Text does not fade out
+        : clampedEaseOutExpo((progress - bgFadeInStartProgress - 0.07) * textSpeed);
 
-    const textBox = new fabric.Text(text, {
-      top,
-      left: paddingV + (easedTextProgress - 1) * width,
-      fill: textColor,
-      opacity: easedTextOpacityProgress,
-      fontFamily,
-      fontSize,
-      charSpacing: width * 0.1,
-    });
+      const textBox = new fabric.Text(text, {
+        top,
+        left: paddingV + (easedTextProgress - 1) * width,
+        fill: textColor,
+        opacity: easedTextOpacityProgress,
+        fontFamily,
+        fontSize,
+        charSpacing: width * 0.1,
+      });
 
-    const bgWidth = textBox.width + (paddingV * 2);
-    const rect = new fabric.Rect({
-      top: top - paddingH,
-      left: (easedBgProgress - 1) * bgWidth,
-      width: bgWidth,
-      height: textBox.height + (paddingH * 2),
-      fill: backgroundColor,
-    });
+      const bgWidth = textBox.width + (paddingV * 2);
+      const rect = new fabric.Rect({
+        top: top - paddingH,
+        left: (easedBgProgress - 1) * bgWidth,
+        width: bgWidth,
+        height: textBox.height + (paddingH * 2),
+        fill: backgroundColor,
+      });
 
-    canvas.add(rect);
-    canvas.add(textBox);
+      canvas.add(rect);
+      canvas.add(textBox);
+    }
   }
 
   return { onRender };
