@@ -2,26 +2,37 @@ const { fabric } = require('fabric');
 const fileUrl = require('file-url');
 
 const { getRandomGradient, getRandomColors } = require('../../colors');
-const { easeOutExpo, easeInOutCubic, clampedEaseOutExpo } = require('../../transitions');
+const {
+  easeOutExpo,
+  easeInOutCubic,
+  clampedEaseOutExpo,
+} = require('../../transitions');
 const { getPositionProps, getFrameByKeyFrames, isUrl } = require('../../util');
 const { blurImage } = require('../fabric');
 
 // http://fabricjs.com/kitchensink
 
-
 const defaultFontFamily = 'sans-serif';
 
-const loadImage = async (pathOrUrl) => new Promise((resolve) => fabric.util.loadImage(isUrl(pathOrUrl) ? pathOrUrl : fileUrl(pathOrUrl), resolve));
+const loadImage = async (pathOrUrl) => new Promise((resolve) => fabric.util.loadImage(
+  isUrl(pathOrUrl) ? pathOrUrl : fileUrl(pathOrUrl),
+  resolve,
+));
 
 function getZoomParams({ progress, zoomDirection, zoomAmount }) {
   let scaleFactor = 1;
-  if (zoomDirection === 'in') scaleFactor = (1 + zoomAmount * progress);
-  else if (zoomDirection === 'out') scaleFactor = (1 + zoomAmount * (1 - progress));
+  if (zoomDirection === 'in') scaleFactor = 1 + zoomAmount * progress;
+  else if (zoomDirection === 'out') { scaleFactor = 1 + zoomAmount * (1 - progress); }
   return scaleFactor;
 }
 
 async function imageFrameSource({ verbose, params, width, height }) {
-  const { path, zoomDirection = 'in', zoomAmount = 0.1, resizeMode = 'contain-blur' } = params;
+  const {
+    path,
+    zoomDirection = 'in',
+    zoomAmount = 0.1,
+    resizeMode = 'contain-blur',
+  } = params;
 
   if (verbose) console.log('Loading', path);
 
@@ -64,7 +75,10 @@ async function imageFrameSource({ verbose, params, width, height }) {
         img.scaleToHeight(height * scaleFactor);
       }
     } else if (resizeMode === 'stretch') {
-      img.setOptions({ scaleX: (width / img.width) * scaleFactor, scaleY: (height / img.height) * scaleFactor });
+      img.setOptions({
+        scaleX: (width / img.width) * scaleFactor,
+        scaleY: (height / img.height) * scaleFactor,
+      });
     }
 
     if (blurredImg) canvas.add(blurredImg);
@@ -100,7 +114,14 @@ async function fillColorFrameSource({ params, width, height }) {
 
 function getRekt(width, height) {
   // width and height with room to rotate
-  return new fabric.Rect({ originX: 'center', originY: 'center', left: width / 2, top: height / 2, width: width * 2, height: height * 2 });
+  return new fabric.Rect({
+    originX: 'center',
+    originY: 'center',
+    left: width / 2,
+    top: height / 2,
+    width: width * 2,
+    height: height * 2,
+  });
 }
 
 async function radialGradientFrameSource({ width, height, params }) {
@@ -123,21 +144,24 @@ async function radialGradientFrameSource({ width, height, params }) {
     const cx = 0.5 * rect.width;
     const cy = 0.5 * rect.height;
 
-    rect.set('fill', new fabric.Gradient({
-      type: 'radial',
-      coords: {
-        r1,
-        r2,
-        x1: cx,
-        y1: cy,
-        x2: cx,
-        y2: cy,
-      },
-      colorStops: [
-        { offset: 0, color: colors[0] },
-        { offset: 1, color: colors[1] },
-      ],
-    }));
+    rect.set(
+      'fill',
+      new fabric.Gradient({
+        type: 'radial',
+        coords: {
+          r1,
+          r2,
+          x1: cx,
+          y1: cy,
+          x2: cx,
+          y2: cy,
+        },
+        colorStops: [
+          { offset: 0, color: colors[0] },
+          { offset: 1, color: colors[1] },
+        ],
+      }),
+    );
 
     canvas.add(rect);
   }
@@ -154,18 +178,21 @@ async function linearGradientFrameSource({ width, height, params }) {
   async function onRender(progress, canvas) {
     const rect = getRekt(width, height);
 
-    rect.set('fill', new fabric.Gradient({
-      coords: {
-        x1: 0,
-        y1: 0,
-        x2: width,
-        y2: height,
-      },
-      colorStops: [
-        { offset: 0, color: colors[0] },
-        { offset: 1, color: colors[1] },
-      ],
-    }));
+    rect.set(
+      'fill',
+      new fabric.Gradient({
+        coords: {
+          x1: 0,
+          y1: 0,
+          x2: width,
+          y2: height,
+        },
+        colorStops: [
+          { offset: 0, color: colors[0] },
+          { offset: 1, color: colors[1] },
+        ],
+      }),
+    );
 
     rect.rotate(progress * 30);
     canvas.add(rect);
@@ -175,10 +202,19 @@ async function linearGradientFrameSource({ width, height, params }) {
 }
 
 async function subtitleFrameSource({ width, height, params }) {
-  const { text, textColor = '#ffffff', backgroundColor = 'rgba(0,0,0,0.3)', fontFamily = defaultFontFamily, delay = 0, speed = 1 } = params;
+  const {
+    text,
+    textColor = '#ffffff',
+    backgroundColor = 'rgba(0,0,0,0.3)',
+    fontFamily = defaultFontFamily,
+    delay = 0,
+    speed = 1,
+  } = params;
 
   async function onRender(progress, canvas) {
-    const easedProgress = easeOutExpo(Math.max(0, Math.min((progress - delay) * speed, 1)));
+    const easedProgress = easeOutExpo(
+      Math.max(0, Math.min((progress - delay) * speed, 1)),
+    );
 
     const min = Math.min(width, height);
     const padding = 0.05 * min;
@@ -192,7 +228,7 @@ async function subtitleFrameSource({ width, height, params }) {
       width: width - padding * 2,
       originX: 'center',
       originY: 'bottom',
-      left: (width / 2) + (-1 + easedProgress) * padding,
+      left: width / 2 + (-1 + easedProgress) * padding,
       top: height - padding,
       opacity: easedProgress,
     });
@@ -281,7 +317,14 @@ async function imageOverlayFrameSource({ params, width, height }) {
 }
 
 async function titleFrameSource({ width, height, params }) {
-  const { text, textColor = '#ffffff', fontFamily = defaultFontFamily, position = 'center', zoomDirection = 'in', zoomAmount = 0.2 } = params;
+  const {
+    text,
+    textColor = '#ffffff',
+    fontFamily = defaultFontFamily,
+    position = 'center',
+    zoomDirection = 'in',
+    zoomAmount = 0.2,
+  } = params;
 
   async function onRender(progress, canvas) {
     // console.log('progress', progress);
@@ -303,7 +346,11 @@ async function titleFrameSource({ width, height, params }) {
     // We need the text as an image in order to scale it
     const textImage = await new Promise((r) => textBox.cloneAsImage(r));
 
-    const { left, top, originX, originY } = getPositionProps({ position, width, height });
+    const { left, top, originX, originY } = getPositionProps({
+      position,
+      width,
+      height,
+    });
 
     textImage.set({
       originX,
@@ -320,12 +367,29 @@ async function titleFrameSource({ width, height, params }) {
 }
 
 async function newsTitleFrameSource({ width, height, duration, params }) {
-  const { text, textColor = '#ffffff', backgroundColor = '#d02a42', fontFamily = defaultFontFamily, delay = 0, speed = 1, manualTiming = false, startTime = 0, finishTime = startTime + 3, fadeDuration = 1 } = params;
+  const {
+    text,
+    textColor = '#ffffff',
+    backgroundColor = '#d02a42',
+    fontFamily = defaultFontFamily,
+    fontScale = 1,
+    delay = 0,
+    speed = 1,
+    manualTiming = false,
+    startTime = 0,
+    finishTime = startTime + 3,
+    fadeDuration = 1,
+    angled = false,
+  } = params;
 
   if (manualTiming && (delay || speed)) {
-    console.warn('manual timing is enabled, so delay and speed parameters have no effect');
+    console.warn(
+      'manual timing is enabled, so delay and speed parameters have no effect',
+    );
   } else if (!manualTiming && (startTime, finishTime, fadeDuration)) {
-    console.warn('manual timing is disabled, so startTime, fadeDuration, and finishTime have no effect');
+    console.warn(
+      'manual timing is disabled, so startTime, fadeDuration, and finishTime have no effect',
+    );
   }
 
   const totalEffectDuration = finishTime - startTime;
@@ -335,15 +399,20 @@ async function newsTitleFrameSource({ width, height, duration, params }) {
   const textSpeed = manualTiming ? bgSpeed * (4 / 3) : speed * 4;
 
   const min = Math.min(width, height);
-  const fontSize = Math.round(min * 0.05);
+  const fontSize = Math.round(min * 0.05) * fontScale;
 
   const textOutOffset = 0.02 * (totalEffectDuration / duration);
   const manualTextOpacityOffset = 0.07 * (totalEffectDuration / duration);
 
   const top = height * 0.08;
 
-  const paddingV = 0.07 * min;
-  const paddingH = 0.03 * min;
+  // const paddingV = 0.07 * min;
+  const paddingV = 0.06 * min;
+  // const paddingV = 0.05 * min;
+  // const paddingH = 0.03 * min;
+  const paddingH = 0.018 * min;
+
+  // TODO: Fix jagged bottom horizontal line (may need to round y values)
 
   async function onRender(progress, canvas) {
     if (
@@ -354,16 +423,30 @@ async function newsTitleFrameSource({ width, height, duration, params }) {
       const textOutLevel = (bgFadeOutFinishProgress - progress - textOutOffset) * bgSpeed;
 
       const easedBgProgress = manualTiming
-        ? clampedEaseOutExpo(bgFadeOutLevel > 1 ? (progress - bgFadeInStartProgress) * bgSpeed : bgFadeOutLevel)
+        ? clampedEaseOutExpo(
+          bgFadeOutLevel > 1
+            ? (progress - bgFadeInStartProgress) * bgSpeed
+            : bgFadeOutLevel,
+        )
         : clampedEaseOutExpo((progress - bgFadeInStartProgress) * bgSpeed);
 
       const easedTextProgress = manualTiming
-        ? clampedEaseOutExpo(textOutLevel > 1 ? (progress - bgFadeInStartProgress - textOutOffset) * textSpeed : textOutLevel)
-        : clampedEaseOutExpo((progress - bgFadeInStartProgress - 0.02) * textSpeed);
+        ? clampedEaseOutExpo(
+          textOutLevel > 1
+            ? (progress - bgFadeInStartProgress - textOutOffset) * textSpeed
+            : textOutLevel,
+        )
+        : clampedEaseOutExpo(
+          (progress - bgFadeInStartProgress - 0.02) * textSpeed,
+        );
 
       const easedTextOpacityProgress = manualTiming
-        ? clampedEaseOutExpo(progress - bgFadeInStartProgress - manualTextOpacityOffset) * textSpeed // Text does not fade out
-        : clampedEaseOutExpo((progress - bgFadeInStartProgress - 0.07) * textSpeed);
+        ? clampedEaseOutExpo(
+          progress - bgFadeInStartProgress - manualTextOpacityOffset,
+        ) * textSpeed // Text does not fade out
+        : clampedEaseOutExpo(
+          (progress - bgFadeInStartProgress - 0.07) * textSpeed,
+        );
 
       const textBox = new fabric.Text(text, {
         top,
@@ -372,21 +455,187 @@ async function newsTitleFrameSource({ width, height, duration, params }) {
         opacity: easedTextOpacityProgress,
         fontFamily,
         fontSize,
-        charSpacing: width * 0.1,
+        // charSpacing: width * 0.1,
+        charSpacing: width * 0.05,
+        // charSpacing: width, // TODO: changed this
       });
 
-      const bgWidth = textBox.width + (paddingV * 2);
-      const rect = new fabric.Rect({
-        top: top - paddingH,
-        left: (easedBgProgress - 1) * bgWidth,
-        width: bgWidth,
-        height: textBox.height + (paddingH * 2),
-        fill: backgroundColor,
-      });
+      const bgWidth = textBox.width + paddingV * 2;
 
-      canvas.add(rect);
+      if (angled) {
+        const plTopY = Math.round(top - paddingH);
+        const plBottomY = Math.round(plTopY + (textBox.height + paddingH * 2));
+        const plLeftX = 0;
+        const plRightX = Math.round(easedBgProgress * bgWidth);
+
+        const polyline = new fabric.Polyline(
+          [
+            { x: plLeftX, y: plTopY },
+            { x: plRightX + width * 0.028, y: plTopY },
+            { x: plRightX, y: plBottomY },
+            { x: plLeftX, y: plBottomY },
+            { x: plLeftX, y: plTopY },
+          ],
+          {
+            fill: backgroundColor,
+          },
+        );
+
+        // console.log("polyline.points:", polyline.points);
+        canvas.add(polyline);
+      } else {
+        const rect = new fabric.Rect({
+          top: top - paddingH,
+          left: (easedBgProgress - 1) * bgWidth,
+          width: bgWidth,
+          height: textBox.height + paddingH * 2,
+          fill: backgroundColor,
+        });
+
+        canvas.add(rect);
+      }
       canvas.add(textBox);
     }
+  }
+
+  return { onRender };
+}
+
+async function listFrameSource({ width, height, duration, params }) {
+  const {
+    text,
+    // textColor = '#ffffff',
+    backgroundColor = 'rgba(0,0,0,0.3)',
+    fontFamily = defaultFontFamily,
+    // delay = 0,
+    // speed = 1,
+  } = params;
+
+  console.log('list duration:', duration);
+  console.log('list text:', text);
+
+  const maxItems = 11;
+
+  if (text.length > maxItems) {
+    text.splice(maxItems - 1, text.length);
+    text.push('  ...   ');
+  }
+
+  const min = Math.min(width, height);
+
+  // const padding = 0.05 * min;
+  // const paddingV = 0.06 * min;
+  const paddingV = 0.02 * min;
+  const paddingH = 0.018 * min;
+  // const minVSpacing = 0.02 * height;
+
+  // const availableHeight = height * 0.7;
+  const availableWidth = width * 0.7;
+
+  // const numListItems = text.length;
+
+  console.log('width:', width);
+  console.log('height:', height);
+  console.log('availableWidth:', availableWidth);
+  console.log('width - availableWidth:', width - availableWidth);
+
+  const truncate = (input) => (input.length > 45 ? `${input.substring(0, 45)}...` : input);
+  // input.length > 30 ? `${input.substring(0, 50)}...` : input;
+
+  // console.log("listItems:", listItems);
+  const fontSize = Math.round(min * 0.035);
+
+  const createTextBox = (rowText, textTop, textLeft) => new fabric.Text(rowText, {
+    top: textTop,
+    left: textLeft,
+    fill: '#000000',
+    fontFamily,
+    fontSize,
+    charSpacing: width * 0.05, // TODO: may want to leave this default
+    textAlign: 'left',
+    originX: 'left',
+    originY: 'center',
+  });
+
+  const createPolylineShadow = (mainPl, YOffset) => new fabric.Polyline(
+    mainPl.points.map((point) => ({ x: point.x, y: point.y + YOffset })),
+    {
+      fill: '#000000',
+    },
+  );
+
+  const testTextBox = createTextBox(text[0], 0, 0);
+
+  const textBoxHeight = testTextBox.height;
+  console.log('textBoxHeight:', textBoxHeight);
+  const rowHeight = testTextBox.height + paddingH * 2;
+  console.log('rowHeight:', rowHeight);
+
+  // const text = text.slice(0, 5);
+
+  const highestY = height / 2 - (rowHeight / 2) * (text.length - 1); // This is for the Y center (not top) of top-most row
+  // const highestY = height - rowHeight * (text.length - 1) - rowHeight / 2; // This is for the Y center (not top) of top-most row
+
+  const listItems = text.map((curText, index) => ({
+    text: truncate(curText),
+    top: highestY + index * rowHeight, // Y center top
+    // top: height - rowHeight / 2 - index * rowHeight, // Y center top
+    left: (width - availableWidth) / 2, // Fully left side
+  }));
+
+  // const canvasItems = [];
+
+  async function onRender(progress, canvas) {
+    // for (const [ind, item] of listItems.entries()) {
+    // eslint-disable-next-line no-plusplus
+    for (let i = 0; i < listItems.length; i++) {
+      const item = listItems[i];
+
+      const textBox = createTextBox(item.text, item.top, item.left + paddingV);
+
+      const plTopY = Math.round(item.top - textBoxHeight / 2 - paddingH);
+      const plBottomY = Math.round(plTopY + rowHeight)
+        + (i !== 0 && i !== listItems.length - 1 ? 1 : 0);
+      const plLeftX = item.left;
+      const plRightX = Math.round(plLeftX + textBox.width + paddingV);
+
+      const polyline = new fabric.Polyline(
+        [
+          { x: plLeftX, y: plTopY },
+          { x: plRightX + width * 0.028, y: plTopY },
+          { x: plRightX, y: plBottomY },
+          { x: plLeftX, y: plBottomY },
+          { x: plLeftX, y: plTopY },
+        ],
+        {
+          fill: backgroundColor,
+        },
+      );
+
+      const plYOffset = (plBottomY - plTopY) * 0.2;
+      const polylineUnder = createPolylineShadow(polyline, plYOffset);
+
+      // console.log("polyline.points:", polyline.points);
+      canvas.add(polylineUnder);
+      canvas.add(polyline);
+      canvas.add(textBox);
+
+      // canvasItems.push({
+      //   textBox,
+      //   polyline,
+      //   polylineUnder,
+      // });
+    }
+
+    // for (item of canvasItems) {
+    //   // console.log("adding item:", item);
+    //   // console.log("item.polylineUnder:", item.polylineUnder);
+    //   // console.log("item.polyline:", item.polyline);
+    //   // console.log("item.textBox:", item.textBox);
+    //   canvas.add(item.polylineUnder);
+    //   canvas.add(item.polyline);
+    //   canvas.add(item.textBox);
+    // }
   }
 
   return { onRender };
@@ -400,37 +649,63 @@ async function getFadedObject({ object, progress }) {
     top: 0,
   });
 
-  rect.set('fill', new fabric.Gradient({
-    coords: {
-      x1: 0,
-      y1: 0,
-      x2: object.width,
-      y2: 0,
-    },
-    colorStops: [
-      { offset: Math.max(0, (progress * (1 + 0.2)) - 0.2), color: 'rgba(255,255,255,1)' },
-      { offset: Math.min(1, (progress * (1 + 0.2))), color: 'rgba(255,255,255,0)' },
-    ],
-  }));
+  rect.set(
+    'fill',
+    new fabric.Gradient({
+      coords: {
+        x1: 0,
+        y1: 0,
+        x2: object.width,
+        y2: 0,
+      },
+      colorStops: [
+        {
+          offset: Math.max(0, progress * (1 + 0.2) - 0.2),
+          color: 'rgba(255,255,255,1)',
+        },
+        {
+          offset: Math.min(1, progress * (1 + 0.2)),
+          color: 'rgba(255,255,255,0)',
+        },
+      ],
+    }),
+  );
 
   const gradientMaskImg = await new Promise((r) => rect.cloneAsImage(r));
   const fadedImage = await new Promise((r) => object.cloneAsImage(r));
 
-  fadedImage.filters.push(new fabric.Image.filters.BlendImage({
-    image: gradientMaskImg,
-    mode: 'multiply',
-  }));
+  fadedImage.filters.push(
+    new fabric.Image.filters.BlendImage({
+      image: gradientMaskImg,
+      mode: 'multiply',
+    }),
+  );
 
   fadedImage.applyFilters();
 
   return fadedImage;
 }
 
-async function slideInTextFrameSource({ width, height, params: { position, text, fontSize = 0.05, charSpacing = 0.1, color = '#ffffff', fontFamily = defaultFontFamily } = {} }) {
+async function slideInTextFrameSource({
+  width,
+  height,
+  params: {
+    position,
+    text,
+    fontSize = 0.05,
+    charSpacing = 0.1,
+    color = '#ffffff',
+    fontFamily = defaultFontFamily,
+  } = {},
+}) {
   async function onRender(progress, canvas) {
     const fontSizeAbs = Math.round(width * fontSize);
 
-    const { left, top, originX, originY } = getPositionProps({ position, width, height });
+    const { left, top, originX, originY } = getPositionProps({
+      position,
+      width,
+      height,
+    });
 
     const textBox = new fabric.Text(text, {
       fill: color,
@@ -439,14 +714,20 @@ async function slideInTextFrameSource({ width, height, params: { position, text,
       charSpacing: width * charSpacing,
     });
 
-    const { opacity, textSlide } = getFrameByKeyFrames([
-      { t: 0.1, props: { opacity: 1, textSlide: 0 } },
-      { t: 0.3, props: { opacity: 1, textSlide: 1 } },
-      { t: 0.8, props: { opacity: 1, textSlide: 1 } },
-      { t: 0.9, props: { opacity: 0, textSlide: 1 } },
-    ], progress);
+    const { opacity, textSlide } = getFrameByKeyFrames(
+      [
+        { t: 0.1, props: { opacity: 1, textSlide: 0 } },
+        { t: 0.3, props: { opacity: 1, textSlide: 1 } },
+        { t: 0.8, props: { opacity: 1, textSlide: 1 } },
+        { t: 0.9, props: { opacity: 0, textSlide: 1 } },
+      ],
+      progress,
+    );
 
-    const fadedObject = await getFadedObject({ object: textBox, progress: easeInOutCubic(textSlide) });
+    const fadedObject = await getFadedObject({
+      object: textBox,
+      progress: easeInOutCubic(textSlide),
+    });
     fadedObject.setOptions({
       originX,
       originY,
@@ -462,10 +743,11 @@ async function slideInTextFrameSource({ width, height, params: { position, text,
 }
 
 async function customFabricFrameSource({ canvas, width, height, params }) {
-  return params.func(({ width, height, fabric, canvas, params }));
+  return params.func({ width, height, fabric, canvas, params });
 }
 
 module.exports = {
+  listFrameSource,
   customFabricFrameSource,
   subtitleFrameSource,
   titleFrameSource,
