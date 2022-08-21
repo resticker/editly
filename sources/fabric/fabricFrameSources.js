@@ -6,6 +6,7 @@ const {
   easeOutExpo,
   easeInOutCubic,
   clampedEaseOutExpo,
+  clampedEaseInOutCubic,
 } = require('../../transitions');
 const { getPositionProps, getFrameByKeyFrames, isUrl } = require('../../util');
 const { blurImage } = require('../fabric');
@@ -22,7 +23,9 @@ const loadImage = async (pathOrUrl) => new Promise((resolve) => fabric.util.load
 function getZoomParams({ progress, zoomDirection, zoomAmount }) {
   let scaleFactor = 1;
   if (zoomDirection === 'in') scaleFactor = 1 + zoomAmount * progress;
-  else if (zoomDirection === 'out') { scaleFactor = 1 + zoomAmount * (1 - progress); }
+  else if (zoomDirection === 'out') {
+    scaleFactor = 1 + zoomAmount * (1 - progress);
+  }
   return scaleFactor;
 }
 
@@ -504,15 +507,19 @@ async function newsTitleFrameSource({ width, height, duration, params }) {
 async function listFrameSource({ width, height, duration, params }) {
   const {
     text,
-    // textColor = '#ffffff',
+    textColor = '#ffffff',
     backgroundColor = 'rgba(0,0,0,0.3)',
     fontFamily = defaultFontFamily,
-    // delay = 0,
-    // speed = 1,
+    startTime = 0,
+    finishTime = startTime + 10,
+    fadeDuration = 3,
   } = params;
 
   console.log('list duration:', duration);
   console.log('list text:', text);
+  console.log('startTime:', startTime);
+  console.log('finishTime:', finishTime);
+  console.log('fadeDuration:', fadeDuration);
 
   const maxItems = 11;
 
@@ -522,33 +529,20 @@ async function listFrameSource({ width, height, duration, params }) {
   }
 
   const min = Math.min(width, height);
-
-  // const padding = 0.05 * min;
-  // const paddingV = 0.06 * min;
   const paddingV = 0.02 * min;
   const paddingH = 0.018 * min;
-  // const minVSpacing = 0.02 * height;
-
-  // const availableHeight = height * 0.7;
-  const availableWidth = width * 0.7;
-
-  // const numListItems = text.length;
 
   console.log('width:', width);
   console.log('height:', height);
-  console.log('availableWidth:', availableWidth);
-  console.log('width - availableWidth:', width - availableWidth);
 
   const truncate = (input) => (input.length > 45 ? `${input.substring(0, 45)}...` : input);
-  // input.length > 30 ? `${input.substring(0, 50)}...` : input;
 
-  // console.log("listItems:", listItems);
   const fontSize = Math.round(min * 0.035);
 
   const createTextBox = (rowText, textTop, textLeft) => new fabric.Text(rowText, {
     top: textTop,
     left: textLeft,
-    fill: '#000000',
+    fill: textColor,
     fontFamily,
     fontSize,
     charSpacing: width * 0.05, // TODO: may want to leave this default
@@ -561,43 +555,121 @@ async function listFrameSource({ width, height, duration, params }) {
     mainPl.points.map((point) => ({ x: point.x, y: point.y + YOffset })),
     {
       fill: '#000000',
+      // opacity: 0.5,
+      clipPath: mainPl,
     },
   );
 
-  const testTextBox = createTextBox(text[0], 0, 0);
-
-  const textBoxHeight = testTextBox.height;
-  console.log('textBoxHeight:', textBoxHeight);
-  const rowHeight = testTextBox.height + paddingH * 2;
-  console.log('rowHeight:', rowHeight);
-
-  // const text = text.slice(0, 5);
+  const sizerTextBox = createTextBox(text[0], 0, 0);
+  const textBoxHeight = sizerTextBox.height;
+  const rowHeight = sizerTextBox.height + paddingH * 2;
 
   const highestY = height / 2 - (rowHeight / 2) * (text.length - 1); // This is for the Y center (not top) of top-most row
-  // const highestY = height - rowHeight * (text.length - 1) - rowHeight / 2; // This is for the Y center (not top) of top-most row
 
   const listItems = text.map((curText, index) => ({
     text: truncate(curText),
     top: highestY + index * rowHeight, // Y center top
-    // top: height - rowHeight / 2 - index * rowHeight, // Y center top
-    left: (width - availableWidth) / 2, // Fully left side
+    left: width * 0.15,
   }));
 
-  // const canvasItems = [];
+  // const totalEffectDuration = finishTime - startTime;
+  const bgFadeInStartProgress = startTime / duration;
+  const bgFadeOutFinishProgress = finishTime / duration;
+  // const staggerTime = 0.3 / duration;
+  console.log('text.length:', text.length);
 
+  //
+  // 11 - 6 = 5
+  //
+  // const staggerScaler = Math.min(1, (text.length - 6) * (0.5 / 5));
+  const getScaler = (numItems, maximumItems, threshold, targetMinimum) => (numItems > threshold
+    ? 1
+        - (Math.min(numItems, maximumItems) - threshold)
+          * ((1 - targetMinimum) / (maximumItems - threshold)) // ? 1 - (Math.min(numItems, 11) - threshold) * (0.3 / 7)
+    : 1);
+
+  // const staggerScaler =
+  //   text.length > 4 ? 1 - (Math.min(text.length, 11) - 4) * (0.4 / 7) : 1;
+  const staggerScaler = getScaler(text.length, maxItems, 4, 0.6);
+  console.log('stagger Scaler:', staggerScaler);
+  const staggerTime = (0.3 / duration) * staggerScaler;
+  console.log('staggerTime:', staggerTime);
+
+  const bgOpacitySpeed = duration / (fadeDuration * 0.25); // TODO: may want to only use progressduration (ie 1 / bgOpacityProgressDuration)
+  const bgOpacityProgressDuration = 1 / bgOpacitySpeed;
+  console.log('bgOpacitySpeed:', bgOpacitySpeed);
+  console.log('bgOpacityProgressDuration:', bgOpacityProgressDuration);
+  // const bgOpacitySpeed = duration / (fadeDuration * 0.4);
+  const bgExpansionSpeed = duration / (fadeDuration * 0.75);
+
+  console.log('startTime:', startTime);
+  console.log('finishTime:', finishTime);
+  console.log('bgFadeInStartProgress:', bgFadeInStartProgress.toFixed(4));
+  console.log('bgFadeOutFinishProgress:', bgFadeOutFinishProgress.toFixed(4));
   async function onRender(progress, canvas) {
-    // for (const [ind, item] of listItems.entries()) {
+    let lastBottomY;
+
     // eslint-disable-next-line no-plusplus
     for (let i = 0; i < listItems.length; i++) {
       const item = listItems[i];
 
+      const ItemBgFadeInStartProgress = bgFadeInStartProgress + i * staggerTime;
+      const ItemBgFadeOutFinishProgress = bgFadeOutFinishProgress - i * staggerTime;
+
+      const bgFadeOutLevel = (ItemBgFadeOutFinishProgress - progress) * bgOpacitySpeed;
+      const bgOpacity = clampedEaseInOutCubic(
+        // TODO: change this?
+        bgFadeOutLevel > 1
+          ? (progress - ItemBgFadeInStartProgress) * bgOpacitySpeed
+          : bgFadeOutLevel,
+      );
+
+      const bgContractionLevel = (ItemBgFadeOutFinishProgress - progress) * bgExpansionSpeed;
+
+      const bgExpansion = bgContractionLevel > 1
+        ? 0.05
+            + 0.95
+              * clampedEaseInOutCubic(
+                (progress - ItemBgFadeInStartProgress) * bgExpansionSpeed,
+              )
+        : 0.05 + 0.95 * clampedEaseInOutCubic(bgContractionLevel);
+
+      clampedEaseInOutCubic(
+        bgContractionLevel > 1
+          ? (progress - ItemBgFadeInStartProgress) * bgExpansionSpeed
+          : bgContractionLevel,
+      );
+
+      // if (bgOpacity > 0) {
+      //   // console.log("bgOpacity:", bgOpacity.toFixed(2));
+      //   // console.log("bgContractionLevel:", bgContractionLevel.toFixed(2));
+      //   // console.log("bgFadeOutLevel:", bgFadeOutLevel.toFixed(2));
+      //   // console.log("bgExpansion:", bgExpansion.toFixed(2));
+      //   // console.log(
+      //   //   `progress ${progress.toFixed(2)} (${(progress * duration).toFixed(
+      //   //     2
+      //   //   )} secs) bgFadeInStartProgress ${bgFadeInStartProgress.toFixed(
+      //   //     2
+      //   //   )} bgFadeOutFinishProgress ${bgFadeOutFinishProgress.toFixed(2)}`
+      //   // );
+      // }
+
       const textBox = createTextBox(item.text, item.top, item.left + paddingV);
 
-      const plTopY = Math.round(item.top - textBoxHeight / 2 - paddingH);
-      const plBottomY = Math.round(plTopY + rowHeight)
-        + (i !== 0 && i !== listItems.length - 1 ? 1 : 0);
+      textBox.opacity = bgOpacity;
+
+      // const plTopY = Math.round(item.top - textBoxHeight / 2 - paddingH);
+      const plTopY = lastBottomY === undefined
+        ? Math.round(item.top - textBoxHeight / 2 - paddingH)
+        : lastBottomY; // Use lastY to ensure there are no gaps
+      // const plBottomY =
+      //   Math.round(plTopY + rowHeight) +
+      //   (i !== 0 && i !== listItems.length - 1 ? 1 : 0); // This overlap is causing issues with stacked opacity
+      const plBottomY = Math.round(plTopY + rowHeight);
       const plLeftX = item.left;
-      const plRightX = Math.round(plLeftX + textBox.width + paddingV);
+      const plRightX = Math.round(
+        plLeftX + (textBox.width + paddingV) * bgExpansion,
+      );
 
       const polyline = new fabric.Polyline(
         [
@@ -605,37 +677,29 @@ async function listFrameSource({ width, height, duration, params }) {
           { x: plRightX + width * 0.028, y: plTopY },
           { x: plRightX, y: plBottomY },
           { x: plLeftX, y: plBottomY },
-          { x: plLeftX, y: plTopY },
         ],
         {
           fill: backgroundColor,
+          absolutePositioned: true,
+          inverted: true,
+          opacity: bgOpacity,
         },
       );
 
+      lastBottomY = plBottomY;
       const plYOffset = (plBottomY - plTopY) * 0.2;
       const polylineUnder = createPolylineShadow(polyline, plYOffset);
 
-      // console.log("polyline.points:", polyline.points);
+      polylineUnder.opacity = bgOpacity;
+
+      textBox.clipPath = new fabric.Polyline(polyline.points, {
+        absolutePositioned: true,
+      });
+
       canvas.add(polylineUnder);
       canvas.add(polyline);
       canvas.add(textBox);
-
-      // canvasItems.push({
-      //   textBox,
-      //   polyline,
-      //   polylineUnder,
-      // });
     }
-
-    // for (item of canvasItems) {
-    //   // console.log("adding item:", item);
-    //   // console.log("item.polylineUnder:", item.polylineUnder);
-    //   // console.log("item.polyline:", item.polyline);
-    //   // console.log("item.textBox:", item.textBox);
-    //   canvas.add(item.polylineUnder);
-    //   canvas.add(item.polyline);
-    //   canvas.add(item.textBox);
-    // }
   }
 
   return { onRender };
