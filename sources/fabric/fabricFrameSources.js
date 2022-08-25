@@ -513,6 +513,10 @@ async function listFrameSource({ width, height, duration, params }) {
     startTime = 0,
     finishTime = startTime + 10,
     fadeDuration = 3,
+    wrapText = false,
+    fontScale = 0.038,
+    YPos = 0.5,
+    YOrigin = 'center',
   } = params;
 
   console.log('list duration:', duration);
@@ -520,24 +524,27 @@ async function listFrameSource({ width, height, duration, params }) {
   console.log('startTime:', startTime);
   console.log('finishTime:', finishTime);
   console.log('fadeDuration:', fadeDuration);
-
-  const maxItems = 11;
-
-  if (text.length > maxItems) {
-    text.splice(maxItems - 1, text.length);
-    text.push('  ...   ');
-  }
-
-  const min = Math.min(width, height);
-  const paddingV = 0.02 * min;
-  const paddingH = 0.018 * min;
-
   console.log('width:', width);
   console.log('height:', height);
 
+  const maxItems = 11;
+  const min = Math.min(width, height);
+  const newPaddingV = 0.018 * min;
+  // const fontSize = Math.round(min * 0.038);
+  const fontSize = Math.round(min * fontScale);
+  const leftHPadding = 0.02 * min;
+  // const rightHPadding = fontSize * 0.83;
+  const rightHPadding = fontSize * 0.82;
+  // const rightHPadding = fontSize * 0.8;
+  const rightAngledPadding = width * 0.028;
+
   const truncate = (input) => (input.length > 45 ? `${input.substring(0, 45)}...` : input);
 
-  const fontSize = Math.round(min * 0.035);
+  const getScaler = (numItems, maximumItems, threshold, targetMinimum) => (numItems > threshold
+    ? 1
+        - (Math.min(numItems, maximumItems) - threshold)
+          * ((1 - targetMinimum) / (maximumItems - threshold))
+    : 1);
 
   const createTextBox = (rowText, textTop, textLeft) => new fabric.Text(rowText, {
     top: textTop,
@@ -545,7 +552,6 @@ async function listFrameSource({ width, height, duration, params }) {
     fill: textColor,
     fontFamily,
     fontSize,
-    charSpacing: width * 0.05, // TODO: may want to leave this default
     textAlign: 'left',
     originX: 'left',
     originY: 'center',
@@ -555,57 +561,61 @@ async function listFrameSource({ width, height, duration, params }) {
     mainPl.points.map((point) => ({ x: point.x, y: point.y + YOffset })),
     {
       fill: '#000000',
-      // opacity: 0.5,
       clipPath: mainPl,
     },
   );
 
-  const sizerTextBox = createTextBox(text[0], 0, 0);
-  const textBoxHeight = sizerTextBox.height;
-  const rowHeight = sizerTextBox.height + paddingH * 2;
+  if (text.length > maxItems) {
+    text.splice(maxItems - 1, text.length);
+    text.push('  ...   ');
+  }
 
+  const sizerTextBox = createTextBox(truncate('a'.repeat(100)), 0, 0);
+
+  console.log('sizerTextBox.text:', sizerTextBox.text);
+  console.log('sizerTextBox.width:', sizerTextBox.width);
+  console.log('leftHPadding:', leftHPadding);
+  console.log('rightHPadding:', rightHPadding);
+  console.log('rightAngledPadding:', rightAngledPadding);
+
+  console.log(
+    'sizerTextBox.width + leftHPadding + rightHPadding + rightAngledPadding:',
+    sizerTextBox.width + leftHPadding + rightHPadding + rightAngledPadding,
+  );
+
+  const rowHeight = sizerTextBox.height + newPaddingV * 2;
   const highestY = height / 2 - (rowHeight / 2) * (text.length - 1); // This is for the Y center (not top) of top-most row
 
   const listItems = text.map((curText, index) => ({
-    text: truncate(curText),
+    text: truncate(curText.trim()),
     top: highestY + index * rowHeight, // Y center top
-    left: width * 0.15,
+    left: Math.round(
+      (width
+        - (sizerTextBox.width
+          + leftHPadding
+          + rightHPadding
+          + rightAngledPadding))
+        / 2,
+    ),
   }));
 
-  // const totalEffectDuration = finishTime - startTime;
+  // console.log("listItems[0]:", listItems[0]);
+
   const bgFadeInStartProgress = startTime / duration;
   const bgFadeOutFinishProgress = finishTime / duration;
-  // const staggerTime = 0.3 / duration;
-  console.log('text.length:', text.length);
-
-  //
-  // 11 - 6 = 5
-  //
-  // const staggerScaler = Math.min(1, (text.length - 6) * (0.5 / 5));
-  const getScaler = (numItems, maximumItems, threshold, targetMinimum) => (numItems > threshold
-    ? 1
-        - (Math.min(numItems, maximumItems) - threshold)
-          * ((1 - targetMinimum) / (maximumItems - threshold)) // ? 1 - (Math.min(numItems, 11) - threshold) * (0.3 / 7)
-    : 1);
-
-  // const staggerScaler =
-  //   text.length > 4 ? 1 - (Math.min(text.length, 11) - 4) * (0.4 / 7) : 1;
-  const staggerScaler = getScaler(text.length, maxItems, 4, 0.6);
-  console.log('stagger Scaler:', staggerScaler);
-  const staggerTime = (0.3 / duration) * staggerScaler;
-  console.log('staggerTime:', staggerTime);
-
   const bgOpacitySpeed = duration / (fadeDuration * 0.25); // TODO: may want to only use progressduration (ie 1 / bgOpacityProgressDuration)
-  const bgOpacityProgressDuration = 1 / bgOpacitySpeed;
-  console.log('bgOpacitySpeed:', bgOpacitySpeed);
-  console.log('bgOpacityProgressDuration:', bgOpacityProgressDuration);
-  // const bgOpacitySpeed = duration / (fadeDuration * 0.4);
   const bgExpansionSpeed = duration / (fadeDuration * 0.75);
+  // const staggerScaler = getScaler(text.length, maxItems, 4, 0.6);
+  const staggerScaler = getScaler(text.length, maxItems, 4, 0.7);
+  const staggerTime = (0.3 / duration) * staggerScaler;
 
   console.log('startTime:', startTime);
   console.log('finishTime:', finishTime);
   console.log('bgFadeInStartProgress:', bgFadeInStartProgress.toFixed(4));
   console.log('bgFadeOutFinishProgress:', bgFadeOutFinishProgress.toFixed(4));
+  console.log('bgOpacitySpeed:', bgOpacitySpeed);
+  console.log('stagger Scaler:', staggerScaler);
+  console.log('staggerTime:', staggerTime);
   async function onRender(progress, canvas) {
     let lastBottomY;
 
@@ -618,7 +628,6 @@ async function listFrameSource({ width, height, duration, params }) {
 
       const bgFadeOutLevel = (ItemBgFadeOutFinishProgress - progress) * bgOpacitySpeed;
       const bgOpacity = clampedEaseInOutCubic(
-        // TODO: change this?
         bgFadeOutLevel > 1
           ? (progress - ItemBgFadeInStartProgress) * bgOpacitySpeed
           : bgFadeOutLevel,
@@ -640,42 +649,29 @@ async function listFrameSource({ width, height, duration, params }) {
           : bgContractionLevel,
       );
 
-      // if (bgOpacity > 0) {
-      //   // console.log("bgOpacity:", bgOpacity.toFixed(2));
-      //   // console.log("bgContractionLevel:", bgContractionLevel.toFixed(2));
-      //   // console.log("bgFadeOutLevel:", bgFadeOutLevel.toFixed(2));
-      //   // console.log("bgExpansion:", bgExpansion.toFixed(2));
-      //   // console.log(
-      //   //   `progress ${progress.toFixed(2)} (${(progress * duration).toFixed(
-      //   //     2
-      //   //   )} secs) bgFadeInStartProgress ${bgFadeInStartProgress.toFixed(
-      //   //     2
-      //   //   )} bgFadeOutFinishProgress ${bgFadeOutFinishProgress.toFixed(2)}`
-      //   // );
-      // }
-
-      const textBox = createTextBox(item.text, item.top, item.left + paddingV);
-
+      const textBox = createTextBox(
+        item.text,
+        item.top,
+        item.left + leftHPadding,
+        // item.left
+      );
       textBox.opacity = bgOpacity;
 
-      // const plTopY = Math.round(item.top - textBoxHeight / 2 - paddingH);
       const plTopY = lastBottomY === undefined
-        ? Math.round(item.top - textBoxHeight / 2 - paddingH)
+        ? Math.round(item.top - sizerTextBox.height / 2 - newPaddingV)
         : lastBottomY; // Use lastY to ensure there are no gaps
-      // const plBottomY =
-      //   Math.round(plTopY + rowHeight) +
-      //   (i !== 0 && i !== listItems.length - 1 ? 1 : 0); // This overlap is causing issues with stacked opacity
       const plBottomY = Math.round(plTopY + rowHeight);
       const plLeftX = item.left;
-      const plRightX = Math.round(
-        plLeftX + (textBox.width + paddingV) * bgExpansion,
+      const plBotRightX = Math.round(
+        plLeftX + (textBox.width + leftHPadding + rightHPadding) * bgExpansion,
       );
 
       const polyline = new fabric.Polyline(
         [
           { x: plLeftX, y: plTopY },
-          { x: plRightX + width * 0.028, y: plTopY },
-          { x: plRightX, y: plBottomY },
+          { x: Math.round(plBotRightX + rightAngledPadding), y: plTopY },
+          // { x: plBotRightX, y: plTopY },
+          { x: plBotRightX, y: plBottomY },
           { x: plLeftX, y: plBottomY },
         ],
         {
@@ -695,6 +691,19 @@ async function listFrameSource({ width, height, duration, params }) {
       textBox.clipPath = new fabric.Polyline(polyline.points, {
         absolutePositioned: true,
       });
+
+      // if (bgOpacity > 0) {
+      //   // if (bgExpansion === 1 && i === 0) {
+      //   if (bgExpansion === 1) {
+      //     console.log("textBox.width:", textBox.width);
+      //     console.log(
+      //       "poly full width:",
+      //       polyline.points[1].x - polyline.points[0].x
+      //     );
+      //     console.log("plLeftX (item.left):", plLeftX);
+      //     console.log("plBotRightX:", plBotRightX);
+      //   }
+      // }
 
       canvas.add(polylineUnder);
       canvas.add(polyline);
