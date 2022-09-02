@@ -59,7 +59,7 @@ export default async function parseConfig({ defaults: defaultsIn = {}, clips, ar
 
     if (['fabric', 'canvas'].includes(type)) assert(typeof layer.func === 'function', '"func" must be a function');
 
-    if (['image', 'image-overlay', 'fabric', 'canvas', 'gl', 'radial-gradient', 'linear-gradient', 'fill-color'].includes(type)) return layer;
+    if (['image', 'image-overlay', 'canvas', 'gl', 'radial-gradient', 'linear-gradient', 'fill-color'].includes(type)) return layer;
 
     // TODO if random-background radial-gradient linear etc
     if (type === 'pause') return handleLayer({ ...restLayer, type: 'fill-color' });
@@ -91,8 +91,10 @@ export default async function parseConfig({ defaults: defaultsIn = {}, clips, ar
       return outLayers;
     }
 
-    if (['title', 'subtitle', 'news-title', 'slide-in-text'].includes(type)) {
-      assert(layer.text, 'Please specify a text');
+    if (['title', 'subtitle', 'news-title', 'slide-in-text', 'fabric'].includes(type)) {
+      if (type !== 'fabric') {
+        assert(layer.text, 'Please specify a text');
+      }
 
       let { fontFamily } = layer;
       const { fontPath, ...rest } = layer;
