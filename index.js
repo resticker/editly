@@ -37,6 +37,7 @@ async function Editly(config = {}) {
     keepSourceAudio,
     allowRemoteRequests,
     audioNorm,
+    aMixNormalization = false,
     outputVolume,
     customOutputArgs,
 
@@ -66,7 +67,7 @@ async function Editly(config = {}) {
   if (verbose) console.log({ tmpDir });
   await fsExtra.mkdirp(tmpDir);
 
-  const { editAudio } = Audio({ ffmpegPath, ffprobePath, enableFfmpegLog, verbose, tmpDir });
+  const { editAudio } = Audio({ ffmpegPath, ffprobePath, enableFfmpegLog, verbose, tmpDir, aMixNormalization });
 
   const audioFilePath = !isGif ? await editAudio({ keepSourceAudio, arbitraryAudio, clipsAudioVolume, clips, audioNorm, outputVolume }) : undefined;
 

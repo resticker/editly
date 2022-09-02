@@ -112,3 +112,4 @@ editly-tmp-*/
 # Other
 .idea
 pnpm-lock.yaml
+.DS_STORE

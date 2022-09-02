@@ -6,8 +6,9 @@ import flatMap from 'lodash-es/flatMap.js';
 import { getFfmpegCommonArgs, getCutFromArgs } from './ffmpeg.js';
 import { readFileStreams } from './util.js';
 
-export default ({ ffmpegPath, ffprobePath, enableFfmpegLog, verbose, tmpDir }) => {
+export default ({ ffmpegPath, ffprobePath, enableFfmpegLog, aMixNormalization, verbose, tmpDir }) => {
   async function createMixedAudioClips({ clips, keepSourceAudio }) {
+    console.log('aMixNormalization:', aMixNormalization);
     return pMap(clips, async (clip, i) => {
       const { duration, layers, transition } = clip;
 
@@ -100,7 +101,7 @@ export default ({ ffmpegPath, ffprobePath, enableFfmpegLog, verbose, tmpDir }) =
         const args = [
           ...getFfmpegCommonArgs({ enableFfmpegLog }),
           ...flatMap(processedAudioLayers, ({ layerAudioPath }) => ['-i', layerAudioPath]),
-          '-filter_complex', `amix=inputs=${processedAudioLayers.length}:duration=longest:weights=${weights.join(' ')}`,
+          '-filter_complex', `amix=inputs=${processedAudioLayers.length}${aMixNormalization ? ':normalize=0' : ''}:duration=longest:weights=${weights.join(' ')}`,
           '-c:a', 'flac',
           '-y',
           clipAudioPath,
@@ -175,7 +176,7 @@ export default ({ ffmpegPath, ffprobePath, enableFfmpegLog, verbose, tmpDir }) =
 
     const volumeArg = outputVolume != null ? `,volume=${outputVolume}` : '';
     const audioNormArg = enableAudioNorm ? `,dynaudnorm=g=${gaussSize}:maxgain=${maxGain}` : '';
-    filterComplex += `;${streams.map((s, i) => `[a${i}]`).join('')}amix=inputs=${streams.length}:duration=first:dropout_transition=0:weights=${streams.map((s) => (s.mixVolume != null ? s.mixVolume : 1)).join(' ')}${audioNormArg}${volumeArg}`;
+    filterComplex += `;${streams.map((s, i) => `[a${i}]`).join('')}amix=inputs=${streams.length}${aMixNormalization ? ':normalize=0' : ''}:duration=first:dropout_transition=0:weights=${streams.map((s) => (s.mixVolume != null ? s.mixVolume : 1)).join(' ')}${audioNormArg}${volumeArg}`;
 
     const mixedAudioPath = join(tmpDir, 'audio-mixed.flac');
 
