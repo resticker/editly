@@ -178,7 +178,7 @@ export default async function parseConfig({ defaults: defaultsIn = {}, clips, ar
 
       // This feature allows the user to show another layer overlayed (or replacing) parts of the lower layers (start - stop)
       const layerDuration = ((stop || clipDuration) - start);
-      assert(layerDuration > 0 && layerDuration <= clipDuration, `Invalid start ${start} or stop ${stop} (${clipDuration})`);
+      assert(layerIn.type === 'fabric' || (layerDuration > 0 && layerDuration <= clipDuration), `Invalid start ${start} or stop ${stop} (${clipDuration})`); // I'm letting custom layers ("fabric" layers) break the start and stop rules to handle it's timing manually
       // TODO Also need to handle video layers (speedFactor etc)
       // TODO handle audio in case of start/stop
 
