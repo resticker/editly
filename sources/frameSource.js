@@ -62,7 +62,7 @@ export async function createFrameSource({ clip, clipIndex, width, height, channe
     return { layer, frameSource };
   }, { concurrency: 1 });
 
-  async function readNextFrame({ time }) {
+  async function readNextFrame({ time, lastCanvasObjects }) {
     const canvas = createFabricCanvas({ width, height });
 
     // eslint-disable-next-line no-restricted-syntax
@@ -94,10 +94,21 @@ export async function createFrameSource({ clip, clipIndex, width, height, channe
     }
     // if (verbose) console.time('Merge frames');
 
+    // TODO: Look for serializer that's faster than stringify? Maybe stringify is fast enough?
+    // eslint-disable-next-line no-underscore-dangle
+    const objectsString = JSON.stringify(canvas._objects); // TODO: Use library like fast-deep-equal to compare this property (ACTUALLY, I think the more important thing is to find a faster way of copying this object property like fast-copy)
+    // TODO: Only use this if optimization is turned on? (or just have it on all the time for my fork)
+    if (lastCanvasObjects && objectsString === lastCanvasObjects) {
+      // console.log("equal!");
+      canvas.clear();
+      canvas.dispose();
+      return [undefined, objectsString]; // Return early if canvas hasn't changed
+    }
+
     if (logTimes) console.time('renderFabricCanvas');
     const rgba = await renderFabricCanvas(canvas);
     if (logTimes) console.timeEnd('renderFabricCanvas');
-    return rgba;
+    return [rgba, objectsString];
   }
 
   async function close() {
