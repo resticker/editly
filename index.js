@@ -328,7 +328,7 @@ async function Editly(config = {}) {
       // If we got no data, use the old data
       // TODO maybe abort?
       if (newFrameSource1Data) frameSource1Data = newFrameSource1Data;
-      else console.warn('No frame data returned, using last frame');
+      // else console.warn('No frame data returned, using last frame');
 
       const isInTransition = frameSource2 && transitionNumFramesSafe > 0 && transitionFrameAt >= 0;
 
