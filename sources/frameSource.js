@@ -64,6 +64,7 @@ export async function createFrameSource({ clip, clipIndex, width, height, channe
 
   async function readNextFrame({ time, latestCanvasObjects }) {
     const canvas = createFabricCanvas({ width, height });
+    let shouldStringify = true;
 
     // eslint-disable-next-line no-restricted-syntax
     for (const { frameSource, layer } of layerFrameSources) {
@@ -71,6 +72,7 @@ export async function createFrameSource({ clip, clipIndex, width, height, channe
       const offsetProgress = (time - (layer.start)) / layer.layerDuration;
       // console.log({ offsetProgress });
       const shouldDrawLayer = offsetProgress >= 0 && offsetProgress <= 1;
+      if (layer.type === 'video') shouldStringify = false;
 
       if (shouldDrawLayer) {
         if (logTimes) console.time('frameSource.readNextFrame');
@@ -95,8 +97,10 @@ export async function createFrameSource({ clip, clipIndex, width, height, channe
     // if (verbose) console.time('Merge frames');
 
     // TODO: Look for serializer that's faster than stringify? Maybe stringify is fast enough?
+    const objectsString = shouldStringify
     // eslint-disable-next-line no-underscore-dangle
-    const objectsString = JSON.stringify(canvas._objects); // TODO: Use library like fast-deep-equal to compare this property (ACTUALLY, I think the more important thing is to find a faster way of copying this object property like fast-copy)
+      ? JSON.stringify(canvas._objects)
+      : undefined; // TODO: Use library like fast-deep-equal to compare this property (ACTUALLY, I think the more important thing is to find a faster way of copying this object property like fast-copy)
     // TODO: Only use this if optimization is turned on? (or just have it on all the time for my fork)
     if (latestCanvasObjects && objectsString === latestCanvasObjects) {
       // console.log("equal!");
