@@ -1023,7 +1023,7 @@ declare namespace Editly {
 		fast?: boolean;
 
 		/**
-		 * Stop motion (low resolution and super low fps, useful for getting a quick preview ⏩).
+		 * Stop motion (super low fps, can be used with 'fast' to lower the resolution and render settings).
 		 *
 		 * @default false
 		 */

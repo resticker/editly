@@ -142,11 +142,11 @@ async function Editly(config = {}) {
   let fps;
   let framerateStr;
 
-  if (fast) {
-    fps = 15;
-    framerateStr = String(fps);
-  } else if (stopMotion) {
+  if (stopMotion) { // This comes first because you can have fast and stopMotion on at the same time (to get low res, low fps, instead of just low fps)
     fps = 2;
+    framerateStr = String(fps);
+  } else if (fast) {
+    fps = 15;
     framerateStr = String(fps);
   } else if (requestedFps && typeof requestedFps === 'number') {
     fps = requestedFps;
