@@ -23,6 +23,7 @@ async function Editly(config = {}) {
     logTimes = false,
     keepTmp = false,
     fast,
+    stopMotion,
 
     outPath,
     clips: clipsIn,
@@ -143,6 +144,9 @@ async function Editly(config = {}) {
 
   if (fast) {
     fps = 15;
+    framerateStr = String(fps);
+  } else if (stopMotion) {
+    fps = 2;
     framerateStr = String(fps);
   } else if (requestedFps && typeof requestedFps === 'number') {
     fps = requestedFps;

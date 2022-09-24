@@ -1023,6 +1023,13 @@ declare namespace Editly {
 		fast?: boolean;
 
 		/**
+		 * Stop motion (low resolution and super low fps, useful for getting a quick preview ⏩).
+		 *
+		 * @default false
+		 */
+		stopMotion?: boolean;
+
+		/**
 		 * An object describing default options for clips and layers.
 		 */
 		defaults?: DefaultOptions;
