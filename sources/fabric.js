@@ -40,7 +40,7 @@ export function fabricCanvasToRgba(fabricCanvas) {
 }
 
 export function createFabricCanvas({ width, height }) {
-  return new fabric.StaticCanvas(null, { width, height });
+  return new fabric.StaticCanvas(null, { width, height, backgroundColor: '#000000' }); // backgroundColor wasn't here initially
 }
 
 export async function renderFabricCanvas(canvas) {
