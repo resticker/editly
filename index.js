@@ -24,6 +24,7 @@ async function Editly(config = {}) {
     keepTmp = false,
     fast,
     stopMotion,
+    muteAudio,
 
     outPath,
     clips: clipsIn,
@@ -70,7 +71,7 @@ async function Editly(config = {}) {
 
   const { editAudio } = Audio({ ffmpegPath, ffprobePath, enableFfmpegLog, verbose, tmpDir, aMixNormalization });
 
-  const audioFilePath = !isGif ? await editAudio({ keepSourceAudio, arbitraryAudio, clipsAudioVolume, clips, audioNorm, outputVolume }) : undefined;
+  const audioFilePath = (!isGif && !muteAudio) ? await editAudio({ keepSourceAudio, arbitraryAudio, clipsAudioVolume, clips, audioNorm, outputVolume }) : undefined;
 
   // Try to detect parameters from first video
   let firstVideoWidth;
