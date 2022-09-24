@@ -1030,6 +1030,13 @@ declare namespace Editly {
 		stopMotion?: boolean;
 
 		/**
+		 * Don't output audio
+		 *
+		 * @default false
+		 */
+		muteAudio?: boolean;
+
+		/**
 		 * An object describing default options for clips and layers.
 		 */
 		defaults?: DefaultOptions;
